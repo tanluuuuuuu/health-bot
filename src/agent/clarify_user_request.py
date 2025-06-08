@@ -6,10 +6,12 @@ Returns a predefined response. Replace logic and configuration as needed.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, TypedDict, List, Annotated
+from typing import Any, Dict, TypedDict, List
 
 from langchain_core.runnables import RunnableConfig
 from src.llm_models.openai_models import openai_model
+from utils import load_prompt_template
+
 import json
 
 
@@ -49,29 +51,11 @@ def clarify_user_request(state: State, config: RunnableConfig) -> Dict[str, Any]
     Returns:
         Dictionary containing the clarification questions and original query
     """
-
-    prompt = f"""You are a helpful medical assistant chatbot. A patient has asked about: "{state.original_user_input}".
-
-Before providing a comprehensive answer, determine if you need additional information from the patient.
-
-If the query is specific enough, respond with "No additional information needed."
-
-If the query is vague or could benefit from clarification, provide 1-3 brief, specific questions that would help you give a more personalized and accurate response. Focus on:
-- Symptoms they're experiencing (if relevant)
-- How long they've been concerned about this topic
-- Their age group or specific demographic factors that might be relevant
-- Previous treatments or approaches they've tried
-- Their specific concerns or what they hope to learn
-
-Format your response as a JSON-like structure:
-{{
-  "needs_clarification": true/false,
-  "clarifying_questions": ["question 1", "question 2", "question 3"]
-}}
-
-Remember to be empathetic, clear, and concise in your questions."""
+    prompt_template = load_prompt_template("clarify_user_request")
+    prompt = prompt_template.format(
+        user_input=state.original_user_input
+    )
     response = openai_model.invoke(prompt)
-
     try:
         parsed_response = json.loads(response.content)
         needs_clarification = parsed_response.get("needs_clarification", False)
@@ -116,22 +100,10 @@ def clarification_router(state: State) -> str:
 
 def craft_final_request(state: State, config: RunnableConfig) -> Dict[str, Any]:
     """Craft the final request for the LLM model."""
-    prompt = f"""You are a medical assistant helping to formulate a comprehensive health query.
-
-    Based on:
-    1. Original request: "{state.original_user_input}"
-    2. Additional information collected: {json.dumps(state.additional_information, indent=2)}
-
-    Create a detailed, well-structured query that combines all this information. This query will be used to retrieve accurate medical information.
-
-    Your response should:
-    - Be written in first person (as if the patient is asking)
-    - Include all relevant symptoms, timeline, and context from both the original request and additional information
-    - Be specific and detailed, but concise
-    - Focus only on the medical question without any introductions or conclusions
-
-    Return only the reformulated query text.
-    """
+    prompt = load_prompt_template("craft_user_final_request").format(
+        original_user_input=state.original_user_input,
+        additional_information=state.additional_information.join("\n")
+    )
     response = openai_model.invoke(prompt)
     return {
         "user_input": response.content,
