@@ -4,40 +4,14 @@ Returns a predefined response. Replace logic and configuration as needed.
 """
 
 from __future__ import annotations
-
-from dataclasses import dataclass, field
-from typing import Any, Dict, TypedDict, List
-
-from langchain_core.runnables import RunnableConfig
+from typing import Any, Dict
 from src.llm_models.openai_models import openai_model
-from utils import load_prompt_template
+from src.agent.utils import load_prompt_template
+from src.agent.state import State
 
 import json
 
-
-class Configuration(TypedDict):
-    """Configurable parameters for the agent.
-
-    Set these when creating assistants OR when invoking the graph.
-    """
-    config = RunnableConfig(recursion_limit=2000, configurable={"thread_id": "2"})
-
-
-@dataclass
-class State:
-    """Input state for the agent.
-
-    Defines the initial structure of incoming data.
-    """
-    original_user_input: str
-    user_input: str
-    # All fields with default values must come after fields without default values
-    needs_clarification: bool = False
-    clarifying_questions: List[str] = field(default_factory=list)
-    additional_information: List[str] = field(default_factory=list)
-
-
-def clarify_user_request(state: State, config: RunnableConfig) -> Dict[str, Any]:
+def clarify_user_request(state: State) -> Dict[str, Any]:
     """Process user's health topic query and generate clarifying questions.
 
     This function analyzes the user's initial query about a health topic and generates
@@ -53,7 +27,7 @@ def clarify_user_request(state: State, config: RunnableConfig) -> Dict[str, Any]
     """
     prompt_template = load_prompt_template("clarify_user_request")
     prompt = prompt_template.format(
-        user_input=state.original_user_input
+        user_input=state["original_user_input"]
     )
     response = openai_model.invoke(prompt)
     try:
@@ -62,7 +36,7 @@ def clarify_user_request(state: State, config: RunnableConfig) -> Dict[str, Any]
         clarifying_questions = parsed_response.get("clarifying_questions", [])
 
         return {
-            "user_input": response.content,
+            "improved_user_input": response.content,
             "needs_clarification": needs_clarification,
             "clarifying_questions": clarifying_questions
         }
@@ -78,7 +52,7 @@ def clarify_user_request(state: State, config: RunnableConfig) -> Dict[str, Any]
 def ask_clarifying_questions(state: State) -> Dict[str, Any]:
     """Ask the user clarifying questions and collect their responses."""
     additional_info = []
-    for question in state.clarifying_questions:
+    for question in state["clarifying_questions"]:
         print(f"I need you to clarify one thing: {question}")
         human_response = input("Your answer: ")
         additional_info.append(f"""
@@ -94,23 +68,26 @@ def ask_clarifying_questions(state: State) -> Dict[str, Any]:
 
 def clarification_router(state: State) -> str:
     """Route based on whether clarification is needed."""
-    if state.needs_clarification and state.clarifying_questions:
+    if state["needs_clarification"] and state["clarifying_questions"]:
         return "ask_questions"
     return "end"
 
-def craft_final_request(state: State, config: RunnableConfig) -> Dict[str, Any]:
+def craft_final_request(state: State) -> Dict[str, Any]:
     """Craft the final request for the LLM model."""
     prompt = load_prompt_template("craft_user_final_request").format(
-        original_user_input=state.original_user_input,
-        additional_information=state.additional_information.join("\n")
+        original_user_input=state["original_user_input"],
+        additional_information=state["additional_information"].join("\n")
     )
     response = openai_model.invoke(prompt)
     return {
-        "user_input": response.content,
+        "improved_user_input": response.content,
     }
 
 if __name__ == "__main__":
     from langgraph.graph import StateGraph, START, END
+    from src.agent.state import State
+    from src.agent.clarify_user_request import clarify_user_request, ask_clarifying_questions, clarification_router, \
+        craft_final_request
 
     graph = StateGraph(State)
     graph.add_node("clarify", clarify_user_request)
@@ -133,10 +110,13 @@ if __name__ == "__main__":
     # Compile the graph
     app = graph.compile(name="Health Assistant Graph")
 
-    # Run the graph with initial state
+    # Run the graph
     result = app.invoke({
         "original_user_input": "I'm experiencing headaches and I've been struggling for the past week.",
-        "user_input": "I'm experiencing headaches and I've been struggling for the past week."
+        "improved_user_input": "",
+        "needs_clarification": False,
+        "clarifying_questions": [],
+        "additional_information": []
     })
 
     print(result)
