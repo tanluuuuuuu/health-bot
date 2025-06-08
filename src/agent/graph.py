@@ -27,10 +27,8 @@ class State:
     """Input state for the agent.
 
     Defines the initial structure of incoming data.
-    See: https://langchain-ai.github.io/langgraph/concepts/low_level/#state
     """
-
-    changeme: str = "example"
+    user_input: str
 
 
 async def call_model(state: State, config: RunnableConfig) -> Dict[str, Any]:
