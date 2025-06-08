@@ -3,8 +3,8 @@ from typing import TypedDict, NotRequired, List
 class State(TypedDict):
     """Input state for the agent"""
 
-    original_user_input: str
-    improved_user_input: str
+    topic: str
+    focus_aspects: NotRequired[str]
 
     needs_clarification: NotRequired[bool]
     clarifying_questions: NotRequired[List[str]]

@@ -1,6 +1,7 @@
 from langgraph.graph import StateGraph, START, END
 from src.agent.state import State
-from src.agent.clarify_user_request import clarify_user_request, ask_clarifying_questions, clarification_router, craft_final_request
+from src.agent.nodes.clarify_user_request import clarify_user_request, ask_clarifying_questions, craft_final_request, \
+    clarification_router
 
 graph = StateGraph(State)
 graph.add_node("clarify", clarify_user_request)
@@ -26,8 +27,8 @@ app = graph.compile(name="Health Assistant Graph")
 if __name__ == "__main__":
     # Run the graph
     result = app.invoke({
-        "original_user_input": "I'm experiencing headaches and I've been struggling for the past week.",
-        "user_input": "",
+        "topic": "infections",
+        "focus_aspects": "",
         "needs_clarification": False,
         "clarifying_questions": [],
         "additional_information": []

@@ -11,6 +11,7 @@ from src.agent.state import State
 
 import json
 
+
 def clarify_user_request(state: State) -> Dict[str, Any]:
     """Process user's health topic query and generate clarifying questions.
 
@@ -27,7 +28,7 @@ def clarify_user_request(state: State) -> Dict[str, Any]:
     """
     prompt_template = load_prompt_template("clarify_user_request")
     prompt = prompt_template.format(
-        user_input=state["original_user_input"]
+        topic=state["topic"]
     )
     response = openai_model.invoke(prompt)
     try:
@@ -36,12 +37,13 @@ def clarify_user_request(state: State) -> Dict[str, Any]:
         clarifying_questions = parsed_response.get("clarifying_questions", [])
 
         return {
-            "improved_user_input": response.content,
+            "focus_aspects": response.content,
             "needs_clarification": needs_clarification,
             "clarifying_questions": clarifying_questions
         }
 
     except json.JSONDecodeError:
+        print("Failed to parse response as JSON.")
         # Handle case where response is not valid JSON
         return {
             "needs_clarification": False,
@@ -55,10 +57,7 @@ def ask_clarifying_questions(state: State) -> Dict[str, Any]:
     for question in state["clarifying_questions"]:
         print(f"I need you to clarify one thing: {question}")
         human_response = input("Your answer: ")
-        additional_info.append(f"""
-        Question: {question}
-        User answer: {human_response}
-""")
+        additional_info.append(f"""\nQuestion: {question} \n User answer: {human_response}""")
 
     return {
         "additional_information": additional_info,
@@ -66,29 +65,28 @@ def ask_clarifying_questions(state: State) -> Dict[str, Any]:
         "clarifying_questions": []
     }
 
+
 def clarification_router(state: State) -> str:
     """Route based on whether clarification is needed."""
     if state["needs_clarification"] and state["clarifying_questions"]:
         return "ask_questions"
     return "end"
 
+
 def craft_final_request(state: State) -> Dict[str, Any]:
     """Craft the final request for the LLM model."""
     prompt = load_prompt_template("craft_user_final_request").format(
-        original_user_input=state["original_user_input"],
-        additional_information=state["additional_information"].join("\n")
+        topic=state["topic"],
+        additional_information="\n".join(state["additional_information"])
     )
     response = openai_model.invoke(prompt)
     return {
-        "improved_user_input": response.content,
+        "focus_aspects": response.content,
     }
+
 
 if __name__ == "__main__":
     from langgraph.graph import StateGraph, START, END
-    from src.agent.state import State
-    from src.agent.clarify_user_request import clarify_user_request, ask_clarifying_questions, clarification_router, \
-        craft_final_request
-
     graph = StateGraph(State)
     graph.add_node("clarify", clarify_user_request)
     graph.add_node("ask_questions", ask_clarifying_questions)
@@ -112,8 +110,8 @@ if __name__ == "__main__":
 
     # Run the graph
     result = app.invoke({
-        "original_user_input": "I'm experiencing headaches and I've been struggling for the past week.",
-        "improved_user_input": "",
+        "topic": "infections",
+        "focus_aspects": "",
         "needs_clarification": False,
         "clarifying_questions": [],
         "additional_information": []
