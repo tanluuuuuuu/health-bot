@@ -33,9 +33,11 @@ Health Bot is an intelligent conversational agent built using LangGraph that pro
 git clone https://github.com/tanluuuuuuu/health-bot.git
 cd health-bot
 ```
-2. Install dependencies, along with the LangGraph CLI:
+2. Install dependencies using `uv`:
 ```bash
-pip install -e . "langgraph-cli[inmem]"
+pip install uv==0.7.12
+uv sync
+source .venv/bin/activate
 ```
 3. Create a .env file with your API keys:
 ```bash
