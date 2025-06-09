@@ -1,3 +1,6 @@
+from langchain_core.messages import ToolMessage
+import json
+
 class ToolNode:
     """A node that runs the tools requested in the last AIMessage."""
 
