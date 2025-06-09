@@ -51,7 +51,7 @@ graph.add_conditional_edges(
         END: END
     }
 )
-graph.add_edge("generate_quiz", END)
+graph.add_edge("generate_quiz", "user_feedback")
 
 
 # Compile the graph
