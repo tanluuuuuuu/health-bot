@@ -36,7 +36,7 @@ graph.add_edge("tools_node", "start_researching")
 
 # Compile the graph
 app = graph.compile(name="Health Assistant Graph")
-app.get_graph().draw_mermaid_png(output_file_path="./graph.png")
+app.get_graph().draw_mermaid_png(output_file_path="./graph_images/graph.png")
 
 if __name__ == "__main__":
 # Run the graph
