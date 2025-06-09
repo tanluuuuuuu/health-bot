@@ -30,7 +30,7 @@ Health Bot is an intelligent conversational agent built using LangGraph that pro
 ### Installation
 1. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/health-bot.git
+git clone https://github.com/tanluuuuuuu/health-bot.git
 cd health-bot
 ```
 2. Install dependencies, along with the LangGraph CLI:
