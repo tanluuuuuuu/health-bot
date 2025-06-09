@@ -4,11 +4,12 @@ from src.agent.nodes.clarify_user_request import clarify_user_request, ask_clari
     clarification_router
 from src.agent.nodes.user_feedback import user_feedback
 from src.agent.nodes.topic_researcher import start_researching
-from src.agent.nodes.tool_route import route_to_tools, feedback_route_to_tools
+from src.agent.nodes.tool_route import route_to_tools, feedback_router
 from langgraph.prebuilt import ToolNode
 from src.tools.tavily import tavily_search_tool
 from src.tools.list_tools import tools
 from langgraph.checkpoint.memory import MemorySaver
+from src.agent.nodes.generate_quiz import generate_quiz
 
 graph = StateGraph(State)
 graph.add_node("clarify", clarify_user_request)
@@ -17,17 +18,19 @@ graph.add_node("final_request", craft_final_request)
 graph.add_node("start_researching", start_researching)
 graph.add_node("tools_node", ToolNode(tools))
 graph.add_node("user_feedback", user_feedback)
+graph.add_node("generate_quiz", generate_quiz)
 
 # Add edges - in this simple case, just from start to our node
 graph.add_edge(START, "clarify")
-graph.add_conditional_edges(
-    "clarify",
-    clarification_router,
-    {
-        "ask_questions": "ask_questions",
-        "start_researching": "start_researching"
-    }
-)
+graph.add_edge("clarify", "ask_questions")
+# graph.add_conditional_edges(
+#     "clarify",
+#     clarification_router,
+#     {
+#         "ask_questions": "ask_questions",
+#         "start_researching": "start_researching"
+#     }
+# )
 graph.add_edge("ask_questions", "final_request")
 graph.add_edge("final_request", "start_researching")
 graph.add_conditional_edges(
@@ -35,12 +38,20 @@ graph.add_conditional_edges(
     route_to_tools,
     {
         "tools_node": "tools_node",
-        "user_feedback": "user_feedback",
-        END: END
+        "user_feedback": "user_feedback"
     }
 )
 graph.add_edge("tools_node", "start_researching")
-graph.add_edge("user_feedback", "start_researching")
+graph.add_conditional_edges(
+    "user_feedback",
+    feedback_router,
+    {
+        "start_researching": "start_researching",
+        "generate_quiz": "generate_quiz",
+        END: END
+    }
+)
+graph.add_edge("generate_quiz", END)
 
 
 # Compile the graph

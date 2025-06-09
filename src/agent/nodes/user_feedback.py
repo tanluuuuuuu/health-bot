@@ -14,8 +14,6 @@ import json
 
 
 def user_feedback(state: State) -> Dict[str, Any]:
-    """
-    """
     """Respond to user feedback."""
     feedback = input("Do you have any other questions? Or would you like to take a comprehension check?\n> ")
     return {"messages": [HumanMessage(content=feedback)]}
