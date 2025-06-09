@@ -9,24 +9,10 @@ from src.tools.tavily import tavily_search_tool
 from src.tools.list_tools import tools
 
 graph = StateGraph(State)
-graph.add_node("clarify", clarify_user_request)
-graph.add_node("ask_questions", ask_clarifying_questions)
-graph.add_node("final_request", craft_final_request)
 graph.add_node("start_researching", start_researching)
 graph.add_node("tools_node", ToolNode(tools))
 
-# Add edges - in this simple case, just from start to our node
-graph.add_edge(START, "clarify")
-graph.add_conditional_edges(
-    "clarify",
-    clarification_router,
-    {
-        "ask_questions": "ask_questions",
-        "start_researching": "start_researching"
-    }
-)
-graph.add_edge("ask_questions", "final_request")
-graph.add_edge("final_request", "start_researching")
+graph.add_edge(START, "start_researching")
 graph.add_conditional_edges(
     "start_researching",
     rout_to_tools,
@@ -35,12 +21,12 @@ graph.add_edge("tools_node", "start_researching")
 
 
 # Compile the graph
-app = graph.compile(name="Health Assistant Graph")
-app.get_graph().draw_mermaid_png(output_file_path="./graph.png")
+app_v1 = graph.compile(name="Health Assistant Graph")
+app_v1.get_graph().draw_mermaid_png(output_file_path="./graph_images/graph_v1.png")
 
 if __name__ == "__main__":
 # Run the graph
-    result = app.invoke({
+    result = app_v1.invoke({
         "messages": [],
         "topic": "infections",
         "focus_aspects": "",

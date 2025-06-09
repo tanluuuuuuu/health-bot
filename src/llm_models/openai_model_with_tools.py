@@ -1,7 +1,7 @@
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 import os
-from src.tools.tavily import tavily_search_tool
+from src.tools.list_tools import tools
 
 load_dotenv()
 
@@ -14,6 +14,5 @@ openai_model = ChatOpenAI(
     max_tokens=250
 )
 
-tools = [tavily_search_tool]
 openai_with_tools = openai_model.bind_tools(tools=tools)
 

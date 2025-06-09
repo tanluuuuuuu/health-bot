@@ -5,6 +5,10 @@ Returns a predefined response. Replace logic and configuration as needed.
 
 from __future__ import annotations
 from typing import Any, Dict
+
+from langchain.chains.question_answering.map_reduce_prompt import messages
+from langchain_core.messages import HumanMessage
+
 from src.llm_models.openai_models import openai_model
 from src.agent.utils import load_prompt_template
 from src.agent.state import State
@@ -70,7 +74,7 @@ def clarification_router(state: State) -> str:
     """Route based on whether clarification is needed."""
     if state["needs_clarification"] and state["clarifying_questions"]:
         return "ask_questions"
-    return "end"
+    return "start_researching"
 
 
 def craft_final_request(state: State) -> Dict[str, Any]:
@@ -81,6 +85,7 @@ def craft_final_request(state: State) -> Dict[str, Any]:
     )
     response = openai_model.invoke(prompt)
     return {
+        "messages": [HumanMessage(content=response.content)],
         "focus_aspects": response.content,
     }
 
