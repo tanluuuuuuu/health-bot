@@ -19,7 +19,6 @@ def get_quiz_questions(topic: str, topic_information: str) -> Dict[str, Any]:
         parsed_quiz["valid"] = True
         return parsed_quiz
     except:
-        breakpoint()
         print("Failed to generate quiz questions.")
         return {"valid": False, "invalid_quiz": quiz_questions.content}
 

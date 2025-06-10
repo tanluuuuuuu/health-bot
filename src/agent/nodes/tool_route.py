@@ -3,6 +3,7 @@ from langchain_core.messages import ToolMessage, AIMessage, HumanMessage
 from langgraph.graph import END
 from src.llm_models.openai_models import openai_model
 from src.agent.utils import load_prompt_template
+from src.agent.nodes.user_feedback import SYSTEM_QUESTION
 
 next_action_feedback_prompt_template = load_prompt_template("next_action_baseon_feedback")
 
@@ -41,14 +42,19 @@ def feedback_router(state: State) -> str:
     if isinstance(message, HumanMessage):
         prompt = next_action_feedback_prompt_template.format(
             user_query=message,
-            previous_response=messages[-2],
-            num_messages=len(messages)
+            system_previous_question=SYSTEM_QUESTION,
         )
         response = openai_model.invoke(prompt).content
         if response == "start_researching":
             return "start_researching"
         elif response == "generate_quiz":
             return "generate_quiz"
+        elif response == "start_new_topic":
+            print("Are you sure? Start new topic we delete previous context and start a new one.\n> (y/n): ")
+            user_input = input()
+            if user_input.lower() == "y":
+                return "start_new_topic"
+            return "user_feedback"
         elif response == "END":
             return END
         else:

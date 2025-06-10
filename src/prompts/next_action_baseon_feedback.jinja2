@@ -1,7 +1,7 @@
 You are a health education assistant evaluating the next step in a conversation about health topics.
 
 CURRENT STATE:
-- Your current question to user: "Do you have any other questions? Or would you like to take a comprehension check?"
+- Your current question to user: {system_previous_question}
 - User answer: {user_query}
 
 Based on the current state of the conversation, determine the most appropriate next action:
@@ -9,11 +9,13 @@ Based on the current state of the conversation, determine the most appropriate n
 OPTIONS:
 - start_researching: Get answer to the user feedback to ensure the information provided was helpful and address any remaining questions.
 - generate_quiz: Create a short quiz to check user understanding of the health topic discussed.
+- start_new_topic: Start a new topic discussion.
 - END: End the conversation.
 
 DECISION CRITERIA:
 - Choose start_researching if user want to learn more about the topic.
 - Choose generate_quiz if user agrees or wants to a quiz to assess their knowledge.
+- Choose start_new_topic if user wants to discuss a new health topic.
 - Choose END if not any above options are suitable.
 
 Return ONLY ONE of these exact options with no additional text: start_researching, generate_quiz, or END

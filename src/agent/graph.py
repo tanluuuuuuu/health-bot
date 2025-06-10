@@ -10,8 +10,11 @@ from src.tools.tavily import tavily_search_tool
 from src.tools.list_tools import tools
 from langgraph.checkpoint.memory import MemorySaver
 from src.agent.nodes.generate_quiz import generate_quiz
+from src.agent.nodes.new_topic import start_new_topic, start_new_topic_with_new_state
 
 graph = StateGraph(State)
+graph.add_node("start_new_topic", start_new_topic)
+graph.add_node("start_new_topic_with_new_state", start_new_topic_with_new_state)
 graph.add_node("clarify", clarify_user_request)
 graph.add_node("ask_questions", ask_clarifying_questions)
 graph.add_node("final_request", craft_final_request)
@@ -21,7 +24,8 @@ graph.add_node("user_feedback", user_feedback)
 graph.add_node("generate_quiz", generate_quiz)
 
 # Add edges - in this simple case, just from start to our node
-graph.add_edge(START, "clarify")
+graph.add_edge(START, "start_new_topic")
+graph.add_edge("start_new_topic", "clarify")
 graph.add_edge("clarify", "ask_questions")
 # graph.add_conditional_edges(
 #     "clarify",
@@ -48,10 +52,13 @@ graph.add_conditional_edges(
     {
         "start_researching": "start_researching",
         "generate_quiz": "generate_quiz",
+        "start_new_topic": "start_new_topic_with_new_state",
+        "user_feedback": "user_feedback",
         END: END
     }
 )
 graph.add_edge("generate_quiz", "user_feedback")
+graph.add_edge("start_new_topic_with_new_state", "clarify")
 
 
 # Compile the graph
