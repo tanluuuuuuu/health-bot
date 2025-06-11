@@ -14,18 +14,21 @@ def clarification_router(state: State) -> str:
     return "end"
 
 
-def route_to_tools(state: State) -> str:
+def research_router(state: State) -> str:
     """
         Use in the conditional_edge to route to the ToolNode if the last message
         has tool calls. Otherwise, route to the end.
     """
     if isinstance(state, list):
-        ai_message = state[-1]
+        message = state[-1]
     elif messages := state.get("messages", []):
-        ai_message = messages[-1]
+        message = messages[-1]
     else:
         raise ValueError(f"No messages found in input state to tool_edge: {state}")
-    if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
+
+    if hasattr(message, "tool_calls") and len(message.tool_calls) > 0:
+        return "tools_node"
+    if isinstance(message, ToolMessage):
         return "tools_node"
     return "user_feedback"
 

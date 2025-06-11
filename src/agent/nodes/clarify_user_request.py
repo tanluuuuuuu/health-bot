@@ -36,7 +36,6 @@ def clarify_user_request(state: State) -> Dict[str, Any]:
     )
     response = openai_model.invoke(prompt)
     try:
-        breakpoint()
         parsed_response = json.loads(response.content)
         needs_clarification = parsed_response.get("needs_clarification", False)
         clarifying_questions = parsed_response.get("clarifying_questions", [])

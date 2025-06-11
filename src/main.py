@@ -1,5 +1,4 @@
 from src.agent.graph import app
-from src.agent.graph_v1 import app_v1
 from langchain_core.messages.human import HumanMessage
 from langchain_core.messages.tool import ToolMessage
 

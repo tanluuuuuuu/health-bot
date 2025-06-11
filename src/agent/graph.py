@@ -4,7 +4,7 @@ from src.agent.nodes.clarify_user_request import clarify_user_request, ask_clari
     clarification_router
 from src.agent.nodes.user_feedback import user_feedback
 from src.agent.nodes.topic_researcher import start_researching
-from src.agent.nodes.tool_route import route_to_tools, feedback_router
+from src.agent.nodes.routers import research_router, feedback_router
 from langgraph.prebuilt import ToolNode
 from src.tools.tavily import tavily_search_tool
 from src.tools.list_tools import tools
@@ -39,7 +39,7 @@ graph.add_edge("ask_questions", "final_request")
 graph.add_edge("final_request", "start_researching")
 graph.add_conditional_edges(
     "start_researching",
-    route_to_tools,
+    research_router,
     {
         "tools_node": "tools_node",
         "user_feedback": "user_feedback"
